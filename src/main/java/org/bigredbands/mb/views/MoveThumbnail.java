@@ -25,7 +25,7 @@ public class MoveThumbnail extends JPanel {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.setColor(Color.WHITE);
-        g.fillRect(0, 0, (int) ((FootballField.FIELD_LENGTH + 2*FootballField.END_ZONE_LENGTH) * scaleFactor), (int) (FootballField.FIELD_HEIGHT * scaleFactor));
+        g.fillRect(0, 0, (int) ((FootballFieldView.FIELD_LENGTH + 2*FootballFieldView.END_ZONE_LENGTH) * scaleFactor), (int) (FootballFieldView.FIELD_HEIGHT * scaleFactor));
 
         g.setColor(Color.BLACK);
         //FootballField.drawFieldLines(g, this.getSize(), 0, 0, 0);

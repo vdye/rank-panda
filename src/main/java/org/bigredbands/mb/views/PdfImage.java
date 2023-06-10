@@ -31,18 +31,18 @@ public class PdfImage extends JPanel {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.setColor(Color.WHITE);
-        g.fillRect(0, 0, (int) (FootballField.FIELD_LENGTH * scaleFactor)+100, (int) (FootballField.FIELD_HEIGHT * scaleFactor));
+        g.fillRect(0, 0, (int) (FootballFieldView.FIELD_LENGTH * scaleFactor)+100, (int) (FootballFieldView.FIELD_HEIGHT * scaleFactor));
 
         g.setColor(Color.BLACK);
-        FootballField.drawFieldLines(g, containingDimension, 0, 0, 0);
-        FootballField.drawHashes(g, (int) (FootballField.END_ZONE_LENGTH * scaleFactor), 0, scaleFactor);
+        FootballFieldView.drawFieldLines(g, containingDimension, 0, 0, 0);
+        FootballFieldView.drawHashes(g, (int) (FootballFieldView.END_ZONE_LENGTH * scaleFactor), 0, scaleFactor);
 
-        FootballField.drawRanks(
-                FootballField.createShapes(rankPositions, (int) (FootballField.END_ZONE_LENGTH * scaleFactor), 0, scaleFactor),
+        FootballFieldView.drawRanks(
+                FootballFieldView.createShapes(rankPositions, (int) (FootballFieldView.END_ZONE_LENGTH * scaleFactor), 0, scaleFactor),
                 new HashMap<String, Shape>(),
                 new HashSet<String>(),
                 g,
-                (int) (FootballField.END_ZONE_LENGTH * scaleFactor),
+                (int) (FootballFieldView.END_ZONE_LENGTH * scaleFactor),
                 0,
                 scaleFactor);
     }

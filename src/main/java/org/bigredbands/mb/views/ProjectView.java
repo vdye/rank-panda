@@ -74,7 +74,7 @@ public class ProjectView {
     private JTextField countText = new JTextField(3);
 
     //The UI of the field where the ranks will be drawn on
-    private FootballField fieldPanel;
+    private FootballFieldView fieldPanel;
 
     private JTextField moveLengthText = new JTextField(3);
     private CommandListView commandListView;
@@ -993,7 +993,7 @@ public class ProjectView {
         controlAndJta.setLayout(new BorderLayout());
 
         //Set up the field
-        fieldPanel = new FootballField(mainView);
+        fieldPanel = new FootballFieldView(mainView);
         fieldPanel.enableMouseClicks(this);
         JPanel controlBar = new JPanel();
         controlBar.setLayout(new BorderLayout());
@@ -1340,7 +1340,7 @@ public class ProjectView {
     /**
      * @param fieldPanel the fieldPanel to set
      */
-    public void setFieldPanel(FootballField fieldPanel) {
+    public void setFieldPanel(FootballFieldView fieldPanel) {
         this.fieldPanel = fieldPanel;
     }
 
