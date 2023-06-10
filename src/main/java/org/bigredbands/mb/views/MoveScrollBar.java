@@ -24,7 +24,7 @@ public class MoveScrollBar {
 
     private final int THUMBNAIL_WIDTH = 131; //Sweet spot that no horizontal scroll bar is needed
     //private final Dimension MOVE_THUMBNAIL_SIZE = new Dimension(THUMBNAIL_WIDTH, (int)(THUMBNAIL_WIDTH * (FootballField.FIELD_HEIGHT/FootballField.FIELD_LENGTH)));  //without end zones
-    private final Dimension MOVE_THUMBNAIL_SIZE = new Dimension(THUMBNAIL_WIDTH, (int)(THUMBNAIL_WIDTH * (1.0f/FootballField.WIDTH_TO_HEIGHT_RATIO)));  //with end zones
+    private final Dimension MOVE_THUMBNAIL_SIZE = new Dimension(THUMBNAIL_WIDTH, (int)(THUMBNAIL_WIDTH * (1.0f/FootballFieldView.WIDTH_TO_HEIGHT_RATIO)));  //with end zones
 
     private final Dimension MOVE_THUMBNAIL_MARGIN = new Dimension(0,20);
 
@@ -32,7 +32,7 @@ public class MoveScrollBar {
 
     private final Dimension MOVE_LABEL_SIZE = new Dimension(10, 20);
 
-    private ArrayList<FootballField> thumbnailList = new ArrayList<FootballField>();
+    private ArrayList<FootballFieldView> thumbnailList = new ArrayList<FootballFieldView>();
 
     private ArrayList<JPanel> moveComponentList = new ArrayList<JPanel>();
 
@@ -98,7 +98,7 @@ public class MoveScrollBar {
     }
 
     public void repaintScrollBar() {
-        for (FootballField move : thumbnailList) {
+        for (FootballFieldView move : thumbnailList) {
             move.repaint();
         }
     }
@@ -115,7 +115,7 @@ public class MoveScrollBar {
         });
         moveContainer.add(moveButton);*/
         //MoveThumbnail moveThumbnail = new MoveThumbnail(mainView, ((float)THUMBNAIL_WIDTH)/((float) (FootballField.FIELD_LENGTH + 2*FootballField.END_ZONE_LENGTH)), MOVE_THUMBNAIL_SIZE, moveNumber);
-        FootballField moveThumbnail = new FootballField(mainView, moveNumber);
+        FootballFieldView moveThumbnail = new FootballFieldView(mainView, moveNumber);
         //Center the moveThumbnail
         moveThumbnail.setAlignmentX(0.5f);
 

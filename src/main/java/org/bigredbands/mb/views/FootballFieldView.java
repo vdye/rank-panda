@@ -33,7 +33,7 @@ import org.bigredbands.mb.models.RankPosition;
  * This class handles the UI of the football field where ranks are
  * drawn and displayed to the user
  */
-public class FootballField extends JPanel {
+public class FootballFieldView extends JPanel {
 
     //NOTE: all football field sizes should be in yards
     public final static int END_ZONE_LENGTH = 10;
@@ -89,7 +89,7 @@ public class FootballField extends JPanel {
      * @param moveNumber - the move number to display.
      */
 
-    public FootballField(MainView mainView, int moveNumber) {
+    public FootballFieldView(MainView mainView, int moveNumber) {
         super();
 
         this.mainView = mainView;
@@ -102,7 +102,7 @@ public class FootballField extends JPanel {
      * Creates a football field which displays the currently selected move according to the controller.
      * @param mainView - the MainView used to call functions to interact with the controller and other views.
      */
-    public FootballField(MainView mainView) {
+    public FootballFieldView(MainView mainView) {
         super();
 
         this.mainView = mainView;
@@ -232,22 +232,22 @@ public class FootballField extends JPanel {
             }
             topLeftX = 0;
             topLeftY = 0;
-            scaleFactor = ((float)dim.width)/((float) (FootballField.FIELD_LENGTH + 2*FootballField.END_ZONE_LENGTH));
+            scaleFactor = ((float)dim.width)/((float) (FootballFieldView.FIELD_LENGTH + 2*FootballFieldView.END_ZONE_LENGTH));
 
             g.fillRect(topLeftX,
                     topLeftY,
-                    (int) (((float) (FootballField.FIELD_LENGTH + 2*FootballField.END_ZONE_LENGTH)) * scaleFactor),
-                    (int) (FootballField.FIELD_HEIGHT * scaleFactor));
+                    (int) (((float) (FootballFieldView.FIELD_LENGTH + 2*FootballFieldView.END_ZONE_LENGTH)) * scaleFactor),
+                    (int) (FootballFieldView.FIELD_HEIGHT * scaleFactor));
 
             //TODO: this needs to be refactored and pulled out to join all the other draw code eventually
             drawFieldLines(g, dim, 0, 0, 0);
-            drawHashes(g, (int) (topLeftX + FootballField.END_ZONE_LENGTH*scaleFactor), topLeftY, scaleFactor);
-            lineMap = createShapes(mainView.getRankPositions(moveNumber), (int) (topLeftX + FootballField.END_ZONE_LENGTH*scaleFactor), topLeftY, scaleFactor);
+            drawHashes(g, (int) (topLeftX + FootballFieldView.END_ZONE_LENGTH*scaleFactor), topLeftY, scaleFactor);
+            lineMap = createShapes(mainView.getRankPositions(moveNumber), (int) (topLeftX + FootballFieldView.END_ZONE_LENGTH*scaleFactor), topLeftY, scaleFactor);
             drawRanks(lineMap,
                     new HashMap<String, Shape>(),
                     mainView.getSelectedRanks(),
                     g,
-                    (int) (topLeftX + FootballField.END_ZONE_LENGTH*scaleFactor),
+                    (int) (topLeftX + FootballFieldView.END_ZONE_LENGTH*scaleFactor),
                     topLeftY,
                     scaleFactor);
         }
