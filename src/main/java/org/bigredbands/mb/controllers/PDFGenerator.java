@@ -73,16 +73,27 @@ public class PDFGenerator {
 
             PDRectangle pageSize = blankPage.getMediaBox();
 
+            // Page dimensions
+            // Units are in 1/72 of an inch
             float pageHeight = pageSize.getWidth(); // height of page
                                                     // (landscape)
             float pageWidth = pageSize.getHeight(); // width of page (landscape)
 
+            // Drill image has ratio 120 by 53.3
+            float drillImageRatio = 120.0f / 53.3f;
+            float drillWidth = 0.85f * pageWidth;
+            float drillHeight = drillWidth / drillImageRatio;
+            float drillMarginX = (pageWidth - drillWidth) / 2.0f;
+
             // creating image on page, calls createImage on JPanel
-            // ratio 120 by 53.3
-            Dimension dim = new Dimension((int) 666.667, 296);
+            // ratio 120 by 53.3, at 300 DPI
+            // (drillWidth/Height are 72 DPI, so we convert 72 -> 300)
+            float imageWidth = drillWidth * (300.0f / 72.0f),
+                imageHeight = drillHeight * (300.0f / 72.0f);
+            Dimension dim = new Dimension((int) imageWidth, (int) imageHeight);
 
             // width in pixels / yards, conversion from yards to pixels
-            float scalefactor = (float) (666.667 / 120.0);
+            float scalefactor = imageWidth / 120.0f;
 
             PdfImage image = new PdfImage(scalefactor, dim,
                     move.getEndPositions());
@@ -105,7 +116,7 @@ public class PDFGenerator {
 
             int imageX = 60; // x coordinate of image on document
 
-            contentStream.drawImage(img, imageX, pageHeight - 360);
+            contentStream.drawImage(img, drillMarginX, pageHeight - 360, drillWidth, drillHeight);
 
             // adding text to page
             contentStream.beginText();

@@ -30,8 +30,11 @@ import org.bigredbands.mb.models.Point;
 import org.bigredbands.mb.models.RankPosition;
 
 /**
- * This class handles the UI of the football field where ranks are
- * drawn and displayed to the user
+ * This class handles the UI of the football field where ranks are drawn and
+ * displayed to the user.
+ *
+ * The football field will be rendered dynamically, so all dimensions need to be
+ * rendered in units of *feet*.
  */
 public class FootballFieldView extends JPanel {
 
