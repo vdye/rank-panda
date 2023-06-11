@@ -3,52 +3,64 @@ package org.bigredbands.mb.views;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Shape;
+import java.awt.Graphics2D;
 import java.util.HashMap;
-import java.util.HashSet;
 
-import javax.swing.JPanel;
-
+import org.bigredbands.mb.models.Field;
 import org.bigredbands.mb.models.RankPosition;
 
-public class PdfImage extends JPanel {
+public class PdfImage extends FieldView {
 
     private float scaleFactor;
     private Dimension containingDimension;
-    private MainView mainView;
     private HashMap<String, RankPosition> rankPositions;
 
-    public PdfImage(float scaleFactor, Dimension containingDimension, HashMap<String, RankPosition> rankPositions) {
-        super();
+    public PdfImage(Field field, float scaleFactor, Dimension containingDimension, HashMap<String, RankPosition> rankPositions) {
+        super(field);
 
         this.scaleFactor = scaleFactor;
         this.containingDimension = containingDimension;
         this.rankPositions = rankPositions;
-
     }
+
+    // @Override
+    // public Dimension getPreferredSize() {
+    //     Dimension d = this.containingDimension;
+
+    //     // Get the width-to-height ratio
+    //     float parentAspectRatio = (float) d.width / d.height;
+    //     float aspectRatio = (field.EndzoneWidth * 2 + field.Length) / (field.SidelineWidth * 2 + field.Height);
+    //     if (parentAspectRatio > aspectRatio) {
+    //         // Parent is wider than image
+    //         return new Dimension((int) (d.height * aspectRatio), d.height);
+    //     } else {
+    //         return new Dimension (d.width, (int) (d.width / aspectRatio));
+    //     }
+    // }
 
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        g.setColor(Color.WHITE);
-        g.fillRect(0, 0, (int) (FootballFieldView.FIELD_LENGTH * scaleFactor)+100, (int) (FootballFieldView.FIELD_HEIGHT * scaleFactor));
 
-        g.setColor(Color.BLACK);
-        FootballFieldView.drawFieldLines(g, containingDimension, 0, 0, 0);
-        FootballFieldView.drawHashes(g, (int) (FootballFieldView.END_ZONE_LENGTH * scaleFactor), 0, scaleFactor);
+        Graphics2D g2d = (Graphics2D)g;
 
-        FootballFieldView.drawRanks(
-                FootballFieldView.createShapes(rankPositions, (int) (FootballFieldView.END_ZONE_LENGTH * scaleFactor), 0, scaleFactor),
-                new HashMap<String, Shape>(),
-                new HashSet<String>(),
-                g,
-                (int) (FootballFieldView.END_ZONE_LENGTH * scaleFactor),
-                0,
-                scaleFactor);
+        drawField(g2d);
+
+        drawFieldLines(g2d);
+        drawHashes(g2d);
+
+        // drawRanks(
+        //         FootballFieldView.createShapes(rankPositions, (int) (FootballFieldView.END_ZONE_LENGTH * scaleFactor), 0, scaleFactor),
+        //         new HashMap<String, Shape>(),
+        //         new HashSet<String>(),
+        //         g,
+        //         (int) (FootballFieldView.END_ZONE_LENGTH * scaleFactor),
+        //         0,
+        //         scaleFactor);
     }
 
-    public float getScaleFactor(){
-        return this.scaleFactor;
+    public float toPx(float measurementFt) {
+        return this.scaleFactor * measurementFt;
     }
 
 //    public HashMap<String, RankPosition> getRankPositions() {

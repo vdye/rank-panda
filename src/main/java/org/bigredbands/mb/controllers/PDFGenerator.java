@@ -21,6 +21,7 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.util.Matrix;
 import org.bigredbands.mb.models.CommandPair;
 import org.bigredbands.mb.models.DrillInfo;
+import org.bigredbands.mb.models.Field;
 import org.bigredbands.mb.models.Move;
 import org.bigredbands.mb.views.PdfImage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -79,24 +80,22 @@ public class PDFGenerator {
                                                     // (landscape)
             float pageWidth = pageSize.getHeight(); // width of page (landscape)
 
-            // Drill image has ratio 120 by 53.3
-            float drillImageRatio = 120.0f / 53.3f;
+            // Measurements in 1/72 in. increments
+            Field field = Field.CollegeFootball; // TODO: allow setting this dynamically
             float drillWidth = 0.85f * pageWidth;
-            float drillHeight = drillWidth / drillImageRatio;
+            float drillHeight = drillWidth / field.AspectRatio;
             float drillMarginX = (pageWidth - drillWidth) / 2.0f;
+            float drillMarginY = 0.06f * pageHeight;
 
-            // creating image on page, calls createImage on JPanel
-            // ratio 120 by 53.3, at 300 DPI
-            // (drillWidth/Height are 72 DPI, so we convert 72 -> 300)
+            // Measurements in px
             float imageWidth = drillWidth * (300.0f / 72.0f),
                 imageHeight = drillHeight * (300.0f / 72.0f);
             Dimension dim = new Dimension((int) imageWidth, (int) imageHeight);
 
-            // width in pixels / yards, conversion from yards to pixels
-            float scalefactor = imageWidth / 120.0f;
+            // Conversion factor
+            float ftToPx = imageWidth / field.TotalLength;
 
-            PdfImage image = new PdfImage(scalefactor, dim,
-                    move.getEndPositions());
+            PdfImage image = new PdfImage(field, ftToPx, dim, move.getEndPositions());
             image.setPreferredSize(dim);
             image.setSize(dim);
             BufferedImage bi = createImage(image);
@@ -116,7 +115,9 @@ public class PDFGenerator {
 
             int imageX = 60; // x coordinate of image on document
 
-            contentStream.drawImage(img, drillMarginX, pageHeight - 360, drillWidth, drillHeight);
+            contentStream.drawImage(img,
+                drillMarginX, pageHeight - drillHeight - drillMarginY,
+                drillWidth, drillHeight);
 
             // adding text to page
             contentStream.beginText();
