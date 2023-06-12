@@ -49,14 +49,7 @@ public class PdfImage extends FieldView {
         drawFieldLines(g2d);
         drawHashes(g2d);
 
-        // drawRanks(
-        //         FootballFieldView.createShapes(rankPositions, (int) (FootballFieldView.END_ZONE_LENGTH * scaleFactor), 0, scaleFactor),
-        //         new HashMap<String, Shape>(),
-        //         new HashSet<String>(),
-        //         g,
-        //         (int) (FootballFieldView.END_ZONE_LENGTH * scaleFactor),
-        //         0,
-        //         scaleFactor);
+        drawRanks(g2d, rankPositions);
     }
 
     public float toPx(float measurementFt) {
