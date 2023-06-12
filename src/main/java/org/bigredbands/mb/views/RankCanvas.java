@@ -117,15 +117,15 @@ public class RankCanvas extends JPanel {
             //define points for each line
             locus = rankHash.get(key);
 
-            x1 = locus.getFront().getX();
-            y1 = locus.getFront().getY();
-            x4 = locus.getEnd().getX();
-            y4 = locus.getEnd().getY();
+            x1 = locus.getFront().X();
+            y1 = locus.getFront().Y();
+            x4 = locus.getEnd().X();
+            y4 = locus.getEnd().Y();
 
             try{
                 //try to get the middle points, if set
-                x2 = locus.getMidpoint().getX();
-                y2 = locus.getMidpoint().getY();
+                x2 = locus.getMidpoint().X();
+                y2 = locus.getMidpoint().Y();
 
             }catch(Exception e){
 

@@ -1,25 +1,22 @@
 package org.bigredbands.mb.models;
 
+import java.awt.geom.Point2D;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
 
-public class Point {
-
-    private Float x;
-    private Float y;
-
+public class Point extends Point2D.Float {
     public Point(float x, float y){
-        this.x = x;
-        this.y = y;
+        super(x, y);
     }
 
-    public float getX(){
-        return x;
+    public float X() {
+        return this.x;
     }
 
-    public float getY(){
-        return y;
+    public float Y() {
+        return this.y;
     }
 
     public Point interpolate(Point b, float t) {
@@ -72,7 +69,7 @@ public class Point {
         pointTag.appendChild(xTag);
 
         //add the coordinate value to the x coordinate tag
-        Text xText = document.createTextNode(x.toString());
+        Text xText = document.createTextNode(java.lang.Float.toString(x));
         xTag.appendChild(xText);
 
         //add the y coordinate tag
@@ -80,7 +77,7 @@ public class Point {
         pointTag.appendChild(yTag);
 
         //add the coordinate value to the y coordinate tag
-        Text yText = document.createTextNode(y.toString());
+        Text yText = document.createTextNode(java.lang.Float.toString(y));
         yTag.appendChild(yText);
 
         return pointTag;
