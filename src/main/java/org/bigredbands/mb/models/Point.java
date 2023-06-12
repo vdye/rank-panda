@@ -23,6 +23,26 @@ public class Point extends Point2D.Float {
         return new Point(this.x*(1-t) + b.x*t, this.y*(1-t) + b.y*t);
     }
 
+    public Point normalize() {
+        return this.multiply(1.0f / (float) this.distance(0, 0));
+    }
+
+    public Point orthogonal() {
+        return new Point(-this.y, this.x);
+    }
+
+    public Point multiply(float value) {
+        return new Point(this.x * value, this.y * value);
+    }
+
+    public Point add(Point other) {
+        return new Point(this.x + (float) other.getX(), this.y + (float) other.getY());
+    }
+
+    public Point subtract(Point other) {
+        return this.add(other.multiply(-1.0f));
+    }
+
     public void setPoint(float x, float y){
         this.x = x;
         this.y = y;
