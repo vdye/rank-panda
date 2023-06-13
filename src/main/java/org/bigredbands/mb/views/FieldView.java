@@ -2,10 +2,14 @@ package org.bigredbands.mb.views;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
+import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
@@ -13,6 +17,7 @@ import java.util.HashMap;
 import javax.swing.JPanel;
 
 import org.bigredbands.mb.models.Field;
+import org.bigredbands.mb.models.FieldStyle;
 import org.bigredbands.mb.models.Point;
 import org.bigredbands.mb.models.RankPosition;
 
@@ -22,44 +27,72 @@ import org.bigredbands.mb.models.RankPosition;
  */
 public abstract class FieldView extends JPanel {
 
-    // All measurements are in *feet* to allow for uniform UI scaling
-    public static class FieldStyle {
+    protected final Field field;
+    protected final FieldStyle fieldStyle;
+    protected HashMap<String, RankPosition> rankPositions;
 
-        public static final float ArrowWidth = 8.0f;
-        public static final float RankEndDiameter = 5.0f;
-        public static final float RankLabelSize = 10.0f;
-        public static final float RankStrokeWidth = 2.5f;
+    private float scaleFactor;
+    private int pxOffsetX;
+    private int pxOffsetY;
 
-        public static final float FieldNumberSize = 8.0f;
-        public static final float HashWidth = 1.0f;
-        public static final float HashPeriod = 5.2f;
-        public static final float MajorIncrementWidth = 1.0f;
-        public static final float MinorIncrementWidth = 0.5f;
-        public static final float GridWidth = 0.3f;
+    protected FieldView(Field field, FieldStyle style,
+            HashMap<String, RankPosition> rankPositions,
+            Dimension container) {
 
-        public static final Color RankColor = Color.BLUE;
-        public static final Color RankLabelColor = Color.RED;
+        // Set the field information
+        this.field = field;
+        this.fieldStyle = style;
+        this.rankPositions = rankPositions;
+
+        // Set the scaling information
+        float containerAspectRatio = (float) (container.getWidth() / container.getHeight());
+        if (containerAspectRatio > field.AspectRatio) {
+            // Container is wider than image - scale to height and center
+            this.scaleFactor = (float) container.getHeight() / field.TotalHeight;
+            this.pxOffsetX = (int) (container.getWidth() - this.scaleFactor * field.TotalLength);
+        } else {
+            // Container is taller than image - scale to width and center
+            this.scaleFactor = (float) container.getWidth() / field.TotalLength;
+            this.pxOffsetY = (int) (container.getHeight() - this.scaleFactor * field.TotalHeight);
+        }
     }
 
-    private final Field field;
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
 
-    protected FieldView(Field field) {
-        this.field = field;
+        Graphics2D g2d = (Graphics2D)g;
+        AffineTransform original = g2d.getTransform();
+
+        // Convert to new coordinate system
+        g2d.scale(this.scaleFactor, this.scaleFactor);
+        g2d.translate(this.pxOffsetX, this.pxOffsetY);
+
+        drawField(g2d);
+
+        drawFieldLines(g2d);
+        drawHashes(g2d);
+
+        if (rankPositions != null) {
+            drawRanks(g2d, rankPositions);
+        }
+
+        g2d.setTransform(original);
     }
 
     public void drawField(Graphics2D g) {
         Rectangle2D canvasRect = new Rectangle2D.Float(0, 0,
-            toPx(field.TotalLength), toPx(field.TotalHeight));
+            field.TotalLength, field.TotalHeight);
         g.setColor(Color.WHITE);
         g.fill(canvasRect);
 
-        Rectangle2D fieldRect = new Rectangle2D.Float(toPx(field.EndzoneWidth), toPx(field.SidelineWidth),
-            toPx(field.Length), toPx(field.Height));
+        Rectangle2D fieldRect = new Rectangle2D.Float(field.EndzoneWidth, field.SidelineWidth,
+            field.Length, field.Height);
         g.setColor(Color.WHITE);
         g.fill(fieldRect);
 
         g.setColor(Color.BLACK);
-        g.setStroke(new BasicStroke(toPx(FieldStyle.MajorIncrementWidth),
+        g.setStroke(new BasicStroke(fieldStyle.MajorIncrementWidth,
             BasicStroke.CAP_BUTT,
             BasicStroke.JOIN_MITER));
         g.draw(fieldRect);
@@ -73,11 +106,11 @@ public abstract class FieldView extends JPanel {
      */
     public void drawHashes(Graphics2D g) {
         BasicStroke dashed = new BasicStroke(
-            toPx(FieldStyle.HashWidth),
+            fieldStyle.HashWidth,
             BasicStroke.CAP_BUTT,
             BasicStroke.JOIN_MITER,
             10.0f,
-            new float[]{ toPx(FieldStyle.HashPeriod) },
+            new float[]{ fieldStyle.HashPeriod },
             0.0f);
 
         g.setStroke(dashed);
@@ -85,10 +118,10 @@ public abstract class FieldView extends JPanel {
 
         for (float hash : field.Hashes) {
             g.drawLine(
-                (int) toPx(field.EndzoneWidth),
-                (int) toPx(field.TotalHeight - field.SidelineWidth - hash),
-                (int) toPx(field.EndzoneWidth + field.Length),
-                (int) toPx(field.TotalHeight - field.SidelineWidth - hash)
+                (int) field.EndzoneWidth,
+                (int) (field.TotalHeight - field.SidelineWidth - hash),
+                (int) (field.EndzoneWidth + field.Length),
+                (int) (field.TotalHeight - field.SidelineWidth - hash)
             );
         }
     }
@@ -101,7 +134,7 @@ public abstract class FieldView extends JPanel {
         int increments = (int) (field.Length / field.Increment);
 
         g.setColor(Color.black);
-        g.setFont(new Font(Font.SANS_SERIF, 0, (int) toPx(FieldStyle.FieldNumberSize)));
+        g.setFont(new Font(Font.SANS_SERIF, 0, (int) fieldStyle.FieldNumberSize));
         FontMetrics metrics = g.getFontMetrics();
 
         int markedIncrements = increments / field.MajorIncrementFrequency;
@@ -116,13 +149,13 @@ public abstract class FieldView extends JPanel {
 
             // Draw numbers at top of page
             g.drawString(numberString,
-                toPx(field.EndzoneWidth + i * field.MajorIncrementFrequency * field.Increment) - pxStringWidth / 2,
-                toPx(field.SidelineWidth + 20.0f));
+                field.EndzoneWidth + i * field.MajorIncrementFrequency * field.Increment - pxStringWidth / 2,
+                field.SidelineWidth + 20.0f);
 
             // Draw numbers at bottom of page
             g.drawString(numberString,
-                toPx(field.EndzoneWidth + i * field.MajorIncrementFrequency * field.Increment) - pxStringWidth / 2,
-                toPx(field.TotalHeight - field.SidelineWidth - 20.0f));
+                field.EndzoneWidth + i * field.MajorIncrementFrequency * field.Increment - pxStringWidth / 2,
+                field.TotalHeight - field.SidelineWidth - 20.0f);
         }
     }
 
@@ -139,38 +172,38 @@ public abstract class FieldView extends JPanel {
         // Divide the field horizontally into increments & draw each one
         int increments = (int) (field.Length / field.Increment);
         for (int i = 0; i < increments + 1; i++) {
-            float strokeWidth = FieldStyle.GridWidth;
+            float strokeWidth = fieldStyle.GridWidth;
             if (i % field.MajorIncrementFrequency == 0) {
-                strokeWidth = toPx(FieldStyle.MajorIncrementWidth);
+                strokeWidth = fieldStyle.MajorIncrementWidth;
             } else if (i % field.MinorIncrementFrequency == 0) {
-                strokeWidth = toPx(FieldStyle.MinorIncrementWidth);
+                strokeWidth = fieldStyle.MinorIncrementWidth;
             }
             g.setStroke(new BasicStroke(strokeWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
 
             g.drawLine(
-                (int) toPx(field.EndzoneWidth + field.Increment * i),
-                (int) toPx(field.SidelineWidth),
-                (int) toPx(field.EndzoneWidth + field.Increment * i),
-                (int) toPx(field.SidelineWidth + field.Height)
+                (int) (field.EndzoneWidth + field.Increment * i),
+                (int) (field.SidelineWidth),
+                (int) (field.EndzoneWidth + field.Increment * i),
+                (int) (field.SidelineWidth + field.Height)
             );
 
         }
 
         increments = (int) (field.Height / field.Increment);
         for (int i = 0; i < increments + 1; i++) {
-            float strokeWidth = FieldStyle.GridWidth;
+            float strokeWidth = fieldStyle.GridWidth;
 
             // Unlike horizontal increments, do not include major increment style
             if (i % field.MinorIncrementFrequency == 0) {
-                strokeWidth = toPx(FieldStyle.MinorIncrementWidth);
+                strokeWidth = fieldStyle.MinorIncrementWidth;
             }
             g.setStroke(new BasicStroke(strokeWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
 
             g.drawLine(
-                (int) toPx(field.EndzoneWidth),
-                (int) toPx(field.TotalHeight - field.SidelineWidth - field.Increment * i),
-                (int) toPx(field.EndzoneWidth + field.Length),
-                (int) toPx(field.TotalHeight - field.SidelineWidth - field.Increment * i)
+                (int) (field.EndzoneWidth),
+                (int) (field.TotalHeight - field.SidelineWidth - field.Increment * i),
+                (int) (field.EndzoneWidth + field.Length),
+                (int) (field.TotalHeight - field.SidelineWidth - field.Increment * i)
             );
 
         }
@@ -182,8 +215,8 @@ public abstract class FieldView extends JPanel {
     private void drawArrowhead(Graphics2D g, Point startPx, Point direction) {
         Polygon arrowhead = new Polygon();
         Point dirNorm = direction.normalize();
-        float arrowHeightPx = (float) Math.sin(Math.toRadians(60)) * toPx(FieldStyle.ArrowWidth);
-        float arrowBasePx = toPx(FieldStyle.ArrowWidth);
+        float arrowHeightPx = (float) Math.sin(Math.toRadians(60)) * fieldStyle.ArrowWidth;
+        float arrowBasePx = fieldStyle.ArrowWidth;
 
         // The arrowhead point
         Point vertex = startPx.add(dirNorm.multiply(arrowHeightPx / 2.0f));
@@ -208,25 +241,25 @@ public abstract class FieldView extends JPanel {
     public void drawRanks(Graphics2D g, HashMap<String, RankPosition> ranks) {
         Point fieldOffset = new Point(field.EndzoneWidth, field.SidelineWidth);
 
-        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, (int) toPx(FieldStyle.RankLabelSize)));
-        g.setStroke(new BasicStroke(toPx(FieldStyle.RankStrokeWidth),
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, (int) fieldStyle.RankLabelSize));
+        g.setStroke(new BasicStroke(fieldStyle.RankStrokeWidth,
             BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
         for (String rankName : ranks.keySet()) {
             // Draw the rank arrow
             // Draw the line
-            g.setColor(FieldStyle.RankColor);
+            g.setColor(fieldStyle.RankColor);
             RankPosition rank = ranks.get(rankName);
             switch (rank.getLineType()) {
                 case RankPosition.LINE:
                     // TODO: convert rank scale to feet (avoid the multiply())
-                    Point startPx = toPx(rank.getFront().multiply(3.0f).add(fieldOffset));
-                    Point endPx = toPx(rank.getEnd().multiply(3.0f).add(fieldOffset));
+                    Point startPx = rank.getFront().multiply(3.0f).add(fieldOffset);
+                    Point endPx = rank.getEnd().multiply(3.0f).add(fieldOffset);
                     g.draw(new Line2D.Float(startPx, endPx));
 
-                    g.fillOval((int) (endPx.X() - toPx(0.5f * FieldStyle.RankEndDiameter)),
-                        (int) (endPx.Y() - toPx(0.5f * FieldStyle.RankEndDiameter)),
-                        (int) toPx(FieldStyle.RankEndDiameter),
-                        (int) toPx(FieldStyle.RankEndDiameter));
+                    g.fillOval((int) (endPx.X() - 0.5f * fieldStyle.RankEndDiameter),
+                        (int) (endPx.Y() - 0.5f * fieldStyle.RankEndDiameter),
+                        (int) fieldStyle.RankEndDiameter,
+                        (int) fieldStyle.RankEndDiameter);
                     drawArrowhead(g, startPx, startPx.subtract(endPx));
                     break;
                 case RankPosition.CURVE:
@@ -239,19 +272,10 @@ public abstract class FieldView extends JPanel {
             }
 
             // Draw the text
-            g.setColor(FieldStyle.RankLabelColor);
+            g.setColor(fieldStyle.RankLabelColor);
 
-            Point midpointPx = toPx(rank.getMidpoint().multiply(3.0f).add(fieldOffset));
+            Point midpointPx = rank.getMidpoint().multiply(3.0f).add(fieldOffset);
             g.drawString(rankName, (int) midpointPx.X(), (int) midpointPx.Y());
         }
     }
-
-    public Point toPx(Point point) {
-        return new Point(toPx(point.X()), toPx(point.Y()));
-    }
-
-    /**
-     * Applies the feet-to-pixels scale factor for the given field
-     */
-    public abstract float toPx(float measurementFt);
 }

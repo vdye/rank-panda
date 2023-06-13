@@ -122,9 +122,6 @@ public class PDFGenerator {
         float imageHeight = drillHeight * (300.0f / 72.0f);
         Dimension dim = new Dimension((int) imageWidth, (int) imageHeight);
 
-        // Conversion factor
-        float ftToPx = imageWidth / field.TotalLength;
-
         // Initialize iterated variables
         int pageNumber = 1; // page number
         int moveNumber = 0; // move number
@@ -190,7 +187,7 @@ public class PDFGenerator {
             yPosition -= lineSpacing * fontSize;
 
             // add image to PDF
-            PdfImage image = new PdfImage(field, ftToPx, dim, move.getEndPositions());
+            PdfImage image = new PdfImage(field, move.getEndPositions(), dim);
             image.setPreferredSize(dim);
             image.setSize(dim);
             BufferedImage bi = createImage(image);
