@@ -92,10 +92,7 @@ public class PDFGenerator {
                 imageHeight = drillHeight * (300.0f / 72.0f);
             Dimension dim = new Dimension((int) imageWidth, (int) imageHeight);
 
-            // Conversion factor
-            float ftToPx = imageWidth / field.TotalLength;
-
-            PdfImage image = new PdfImage(field, ftToPx, dim, move.getEndPositions());
+            PdfImage image = new PdfImage(field, move.getEndPositions(), dim);
             image.setPreferredSize(dim);
             image.setSize(dim);
             BufferedImage bi = createImage(image);
