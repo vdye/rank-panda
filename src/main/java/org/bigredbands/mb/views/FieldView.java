@@ -7,6 +7,8 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Shape;
+import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Line2D;
@@ -243,12 +245,11 @@ public abstract class FieldView extends JPanel {
     public void drawRanks(Graphics2D g, HashMap<String, RankPosition> ranks) {
         Point fieldOffset = new Point(field.EndzoneWidth, field.SidelineWidth);
 
-        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, (int) fieldStyle.RankLabelSize));
-        g.setStroke(new BasicStroke(fieldStyle.RankStrokeWidth,
-            BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
         for (String rankName : ranks.keySet()) {
             // Draw the rank arrow
             // Draw the line
+            g.setStroke(new BasicStroke(fieldStyle.RankStrokeWidth,
+                BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
             g.setColor(fieldStyle.RankColor);
             RankPosition rank = ranks.get(rankName);
 
@@ -293,10 +294,16 @@ public abstract class FieldView extends JPanel {
                 Arc2D.CHORD));
             drawArrowhead(g, start, arrowDir);
 
-            // Draw the text
-            g.setColor(fieldStyle.RankLabelColor);
+            // Draw the rank label
+            Font rankFont = new Font(Font.SANS_SERIF, Font.BOLD, (int) fieldStyle.RankLabelSize);
+            GlyphVector rankLabel = rankFont.createGlyphVector(g.getFontRenderContext(), rankName);
+            Shape rankShape = rankLabel.getOutline(midpoint.X(), midpoint.Y());
 
-            g.drawString(rankName, midpoint.X(), midpoint.Y());
+            g.setStroke(new BasicStroke(0.1f * fieldStyle.RankLabelSize));
+            g.setColor(fieldStyle.RankLabelBackground);
+            g.draw(rankShape);
+            g.setColor(fieldStyle.RankLabelColor);
+            g.fill(rankShape);
         }
     }
 }
