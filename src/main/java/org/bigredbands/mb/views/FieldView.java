@@ -7,9 +7,9 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Polygon;
-import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Arc2D;
+import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
@@ -213,26 +213,27 @@ public abstract class FieldView extends JPanel {
     }
 
     private void drawArrowhead(Graphics2D g, Point startPx, Point direction) {
-        Polygon arrowhead = new Polygon();
+        GeneralPath arrowhead = new GeneralPath();
         Point dirNorm = direction.normalize();
         float arrowHeightPx = (float) Math.sin(Math.toRadians(60)) * fieldStyle.ArrowWidth;
         float arrowBasePx = fieldStyle.ArrowWidth;
 
         // The arrowhead point
         Point vertex = startPx.add(dirNorm.multiply(arrowHeightPx / 2.0f));
-        arrowhead.addPoint((int) vertex.X(), (int) vertex.Y());
+        arrowhead.moveTo(vertex.X(), vertex.Y());
 
         // Base of the arrowhead
         Point orthoNorm = dirNorm.orthogonal();
         vertex = startPx.subtract(dirNorm.multiply(arrowHeightPx / 2.0f)
             .add(orthoNorm.multiply(arrowBasePx / 2.0f)));
-            arrowhead.addPoint((int) vertex.X(), (int) vertex.Y());
+            arrowhead.lineTo(vertex.X(), vertex.Y());
 
         vertex = startPx.subtract(dirNorm.multiply(arrowHeightPx / 2.0f)
             .subtract(orthoNorm.multiply(arrowBasePx / 2.0f)));
-        arrowhead.addPoint((int) vertex.X(), (int) vertex.Y());
+        arrowhead.lineTo(vertex.X(), vertex.Y());
 
-        g.fillPolygon(arrowhead);
+        arrowhead.closePath();
+        g.fill(arrowhead);
     }
 
      /**
@@ -256,10 +257,12 @@ public abstract class FieldView extends JPanel {
                     Point endPx = rank.getEnd().multiply(3.0f).add(fieldOffset);
                     g.draw(new Line2D.Float(startPx, endPx));
 
-                    g.fillOval((int) (endPx.X() - 0.5f * fieldStyle.RankEndDiameter),
-                        (int) (endPx.Y() - 0.5f * fieldStyle.RankEndDiameter),
-                        (int) fieldStyle.RankEndDiameter,
-                        (int) fieldStyle.RankEndDiameter);
+                    g.fill(new Arc2D.Float((endPx.X() - 0.5f * fieldStyle.RankEndDiameter),
+                        (endPx.Y() - 0.5f * fieldStyle.RankEndDiameter),
+                        fieldStyle.RankEndDiameter,
+                        fieldStyle.RankEndDiameter,
+                        0.0f, 360.0f,
+                        Arc2D.CHORD));
                     drawArrowhead(g, startPx, startPx.subtract(endPx));
                     break;
                 case RankPosition.CURVE:

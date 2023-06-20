@@ -54,7 +54,7 @@ public class FieldStyle {
 
         public Builder() {
             // Setup defaults
-            ArrowWidth = 8.0f;
+            ArrowWidth = 7.0f;
             RankEndDiameter = 5.0f;
             RankLabelSize = 10.0f;
             RankStrokeWidth = 2.5f;
