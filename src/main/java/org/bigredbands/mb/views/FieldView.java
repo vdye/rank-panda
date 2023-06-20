@@ -239,71 +239,74 @@ public abstract class FieldView extends JPanel {
         g.fill(arrowhead);
     }
 
-     /**
-      * This function draws the shapes to the screen
-      */
-    public void drawRanks(Graphics2D g, HashMap<String, RankPosition> ranks) {
+    public void drawRank(Graphics2D g, String rankName, RankPosition rank) {
         Point fieldOffset = new Point(field.EndzoneWidth, field.SidelineWidth);
 
+        // Draw the rank arrow
+        // Draw the line
+        g.setStroke(new BasicStroke(fieldStyle.RankStrokeWidth,
+            BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
+        g.setColor(fieldStyle.RankColor);
+
+        // TODO: convert rank scale to feet (avoid the multiply())
+        Point start = rank.getFront().multiply(3.0f).add(fieldOffset);
+        Point midpoint = rank.getMidpoint().multiply(3.0f).add(fieldOffset);
+        Point end = rank.getEnd().multiply(3.0f).add(fieldOffset);
+
+        Point arrowDir;
+        switch (rank.getLineType()) {
+            case RankPosition.LINE:
+                g.draw(new Line2D.Float(start, end));
+                arrowDir = start.subtract(end);
+                break;
+            case RankPosition.CURVE:
+                // TODO: convert rank scale to feet (avoid the multiply())
+                Point control = rank.getCurveControlPoint().multiply(3.0f).add(fieldOffset);
+                g.draw(new QuadCurve2D.Float(start.X(), start.Y(),
+                    control.X(), control.Y(),
+                    end.X(), end.Y()));
+                arrowDir = start.subtract(control);
+                break;
+            case RankPosition.CORNER:
+                Path2D.Float rankLine = new Path2D.Float();
+                rankLine.moveTo(start.X(), start.Y());
+                rankLine.lineTo(midpoint.X(), midpoint.Y());
+                rankLine.lineTo(end.X(), end.Y());
+                g.draw(rankLine);
+                arrowDir = start.subtract(midpoint);
+                break;
+            default:
+                System.out.println("TRIED CREATE SOMETHING THAT WASN'T A LINE, CURVE, OR CORNER");
+                return;
+        }
+
+        // Draw endpoints
+        g.fill(new Arc2D.Float((end.X() - 0.5f * fieldStyle.RankEndDiameter),
+            (end.Y() - 0.5f * fieldStyle.RankEndDiameter),
+            fieldStyle.RankEndDiameter,
+            fieldStyle.RankEndDiameter,
+            0.0f, 360.0f,
+            Arc2D.CHORD));
+        drawArrowhead(g, start, arrowDir);
+
+        // Draw the rank label
+        Font rankFont = new Font(Font.SANS_SERIF, Font.BOLD, (int) fieldStyle.RankLabelSize);
+        GlyphVector rankLabel = rankFont.createGlyphVector(g.getFontRenderContext(), rankName);
+        Shape rankShape = rankLabel.getOutline(midpoint.X(), midpoint.Y());
+
+        g.setStroke(new BasicStroke(0.1f * fieldStyle.RankLabelSize));
+        g.setColor(fieldStyle.RankLabelBackground);
+        g.draw(rankShape);
+        g.setColor(fieldStyle.RankLabelColor);
+        g.fill(rankShape);
+    }
+
+     /**
+      * This function draws the ranks (line, curve, and corner) to the canvas.
+      */
+    public void drawRanks(Graphics2D g, HashMap<String, RankPosition> ranks) {
         for (String rankName : ranks.keySet()) {
-            // Draw the rank arrow
-            // Draw the line
-            g.setStroke(new BasicStroke(fieldStyle.RankStrokeWidth,
-                BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
-            g.setColor(fieldStyle.RankColor);
-            RankPosition rank = ranks.get(rankName);
-
-            // TODO: convert rank scale to feet (avoid the multiply())
-            Point start = rank.getFront().multiply(3.0f).add(fieldOffset);
-            Point midpoint = rank.getMidpoint().multiply(3.0f).add(fieldOffset);
-            Point end = rank.getEnd().multiply(3.0f).add(fieldOffset);
-
-            Point arrowDir;
-            switch (rank.getLineType()) {
-                case RankPosition.LINE:
-                    g.draw(new Line2D.Float(start, end));
-                    arrowDir = start.subtract(end);
-                    break;
-                case RankPosition.CURVE:
-                    // TODO: convert rank scale to feet (avoid the multiply())
-                    Point control = rank.getCurveControlPoint().multiply(3.0f).add(fieldOffset);
-                    g.draw(new QuadCurve2D.Float(start.X(), start.Y(),
-                        control.X(), control.Y(),
-                        end.X(), end.Y()));
-                    arrowDir = start.subtract(control);
-                    break;
-                case RankPosition.CORNER:
-                    Path2D.Float rankLine = new Path2D.Float();
-                    rankLine.moveTo(start.X(), start.Y());
-                    rankLine.lineTo(midpoint.X(), midpoint.Y());
-                    rankLine.lineTo(end.X(), end.Y());
-                    g.draw(rankLine);
-                    arrowDir = start.subtract(midpoint);
-                    break;
-                default:
-                    System.out.println("TRIED CREATE SOMETHING THAT WASN'T A LINE, CURVE, OR CORNER");
-                    continue;
-            }
-
-            // Draw endpoints
-            g.fill(new Arc2D.Float((end.X() - 0.5f * fieldStyle.RankEndDiameter),
-                (end.Y() - 0.5f * fieldStyle.RankEndDiameter),
-                fieldStyle.RankEndDiameter,
-                fieldStyle.RankEndDiameter,
-                0.0f, 360.0f,
-                Arc2D.CHORD));
-            drawArrowhead(g, start, arrowDir);
-
-            // Draw the rank label
-            Font rankFont = new Font(Font.SANS_SERIF, Font.BOLD, (int) fieldStyle.RankLabelSize);
-            GlyphVector rankLabel = rankFont.createGlyphVector(g.getFontRenderContext(), rankName);
-            Shape rankShape = rankLabel.getOutline(midpoint.X(), midpoint.Y());
-
-            g.setStroke(new BasicStroke(0.1f * fieldStyle.RankLabelSize));
-            g.setColor(fieldStyle.RankLabelBackground);
-            g.draw(rankShape);
-            g.setColor(fieldStyle.RankLabelColor);
-            g.fill(rankShape);
+            drawRank(g, rankName, ranks.get(rankName));
         }
     }
 }
