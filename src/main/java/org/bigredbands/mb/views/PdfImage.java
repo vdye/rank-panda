@@ -1,5 +1,6 @@
 package org.bigredbands.mb.views;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.util.HashMap;
 
@@ -10,7 +11,9 @@ import org.bigredbands.mb.models.RankPosition;
 public class PdfImage extends FieldView {
 
     // Use default FieldStyle
-    private static final FieldStyle fieldStyle = new FieldStyle.Builder().build();
+    private static final FieldStyle fieldStyle = new FieldStyle.Builder()
+        .rankColors(Color.DARK_GRAY, Color.LIGHT_GRAY, Color.BLACK)
+        .build();
 
     public PdfImage(Field field, HashMap<String, RankPosition> rankPositions, Dimension container) {
         super(field, fieldStyle, rankPositions, container);

@@ -18,6 +18,7 @@ public class FieldStyle {
 
     public final Color RankColor;
     public final Color RankLabelColor;
+    public final Color RankLabelBackground;
 
     private FieldStyle(Builder builder) {
         this.ArrowWidth = builder.ArrowWidth;
@@ -34,6 +35,7 @@ public class FieldStyle {
 
         this.RankColor = builder.RankColor;
         this.RankLabelColor = builder.RankLabelColor;
+        this.RankLabelBackground = builder.RankLabelBackground;
     }
 
     public static class Builder {
@@ -51,6 +53,7 @@ public class FieldStyle {
 
         private Color RankColor;
         private Color RankLabelColor;
+        private Color RankLabelBackground;
 
         public Builder() {
             // Setup defaults
@@ -68,12 +71,20 @@ public class FieldStyle {
 
             RankColor = Color.BLUE;
             RankLabelColor = Color.RED;
+            RankLabelBackground = new Color(0, 0, 0, 0); // Transparent by default
         }
 
         public Builder grid(float majorIncrementWidth, float minorIncrementWidth, float gridWidth) {
             this.MajorIncrementWidth = majorIncrementWidth;
             this.MinorIncrementWidth = minorIncrementWidth;
             this.GridWidth = gridWidth;
+            return this;
+        }
+
+        public Builder rankColors(Color rankColor, Color rankLabelColor, Color rankLabelBackground) {
+            this.RankColor = rankColor;
+            this.RankLabelColor = rankLabelColor;
+            this.RankLabelBackground = rankLabelBackground;
             return this;
         }
 
