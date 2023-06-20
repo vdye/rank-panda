@@ -9,8 +9,9 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
-import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
+import java.awt.geom.Path2D;
+import java.awt.geom.QuadCurve2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 
@@ -213,7 +214,7 @@ public abstract class FieldView extends JPanel {
     }
 
     private void drawArrowhead(Graphics2D g, Point startPx, Point direction) {
-        GeneralPath arrowhead = new GeneralPath();
+        Path2D arrowhead = new Path2D.Float();
         Point dirNorm = direction.normalize();
         float arrowHeightPx = (float) Math.sin(Math.toRadians(60)) * fieldStyle.ArrowWidth;
         float arrowBasePx = fieldStyle.ArrowWidth;
@@ -250,35 +251,52 @@ public abstract class FieldView extends JPanel {
             // Draw the line
             g.setColor(fieldStyle.RankColor);
             RankPosition rank = ranks.get(rankName);
+
+            // TODO: convert rank scale to feet (avoid the multiply())
+            Point start = rank.getFront().multiply(3.0f).add(fieldOffset);
+            Point midpoint = rank.getMidpoint().multiply(3.0f).add(fieldOffset);
+            Point end = rank.getEnd().multiply(3.0f).add(fieldOffset);
+
+            Point arrowDir;
             switch (rank.getLineType()) {
                 case RankPosition.LINE:
-                    // TODO: convert rank scale to feet (avoid the multiply())
-                    Point startPx = rank.getFront().multiply(3.0f).add(fieldOffset);
-                    Point endPx = rank.getEnd().multiply(3.0f).add(fieldOffset);
-                    g.draw(new Line2D.Float(startPx, endPx));
-
-                    g.fill(new Arc2D.Float((endPx.X() - 0.5f * fieldStyle.RankEndDiameter),
-                        (endPx.Y() - 0.5f * fieldStyle.RankEndDiameter),
-                        fieldStyle.RankEndDiameter,
-                        fieldStyle.RankEndDiameter,
-                        0.0f, 360.0f,
-                        Arc2D.CHORD));
-                    drawArrowhead(g, startPx, startPx.subtract(endPx));
+                    g.draw(new Line2D.Float(start, end));
+                    arrowDir = start.subtract(end);
                     break;
                 case RankPosition.CURVE:
+                    // TODO: convert rank scale to feet (avoid the multiply())
+                    Point control = rank.getCurveControlPoint().multiply(3.0f).add(fieldOffset);
+                    g.draw(new QuadCurve2D.Float(start.X(), start.Y(),
+                        control.X(), control.Y(),
+                        end.X(), end.Y()));
+                    arrowDir = start.subtract(control);
                     break;
                 case RankPosition.CORNER:
+                    Path2D.Float rankLine = new Path2D.Float();
+                    rankLine.moveTo(start.X(), start.Y());
+                    rankLine.lineTo(midpoint.X(), midpoint.Y());
+                    rankLine.lineTo(end.X(), end.Y());
+                    g.draw(rankLine);
+                    arrowDir = start.subtract(midpoint);
                     break;
                 default:
                     System.out.println("TRIED CREATE SOMETHING THAT WASN'T A LINE, CURVE, OR CORNER");
                     continue;
             }
 
+            // Draw endpoints
+            g.fill(new Arc2D.Float((end.X() - 0.5f * fieldStyle.RankEndDiameter),
+                (end.Y() - 0.5f * fieldStyle.RankEndDiameter),
+                fieldStyle.RankEndDiameter,
+                fieldStyle.RankEndDiameter,
+                0.0f, 360.0f,
+                Arc2D.CHORD));
+            drawArrowhead(g, start, arrowDir);
+
             // Draw the text
             g.setColor(fieldStyle.RankLabelColor);
 
-            Point midpointPx = rank.getMidpoint().multiply(3.0f).add(fieldOffset);
-            g.drawString(rankName, (int) midpointPx.X(), (int) midpointPx.Y());
+            g.drawString(rankName, midpoint.X(), midpoint.Y());
         }
     }
 }
