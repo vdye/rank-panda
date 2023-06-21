@@ -51,7 +51,6 @@ public class PDFGenerator {
      * @throws IOException
      */
     public void createPDF(DrillInfo drillInfo, File file) throws IOException {
-
         // Create a new empty document
         PDDocument document = new PDDocument();
 
@@ -75,7 +74,7 @@ public class PDFGenerator {
             PDRectangle pageSize = blankPage.getMediaBox();
 
             // Page dimensions
-            // Units are in 1/72 of an inch
+            // Units are in 1/72 of an inch ("user-space units")
             float pageHeight = pageSize.getWidth(); // height of page
                                                     // (landscape)
             float pageWidth = pageSize.getHeight(); // width of page (landscape)
@@ -85,7 +84,8 @@ public class PDFGenerator {
             float drillWidth = 0.85f * pageWidth;
             float drillHeight = drillWidth / field.AspectRatio;
             float drillMarginX = (pageWidth - drillWidth) / 2.0f;
-            float drillMarginY = 0.06f * pageHeight;
+            float fieldMarginX = drillMarginX + (field.EndzoneWidth / field.TotalLength) * drillWidth;
+            float drillMarginY = 0.08f * pageHeight;
 
             // Measurements in px
             float imageWidth = drillWidth * (300.0f / 72.0f),
@@ -116,45 +116,50 @@ public class PDFGenerator {
                 drillMarginX, pageHeight - drillHeight - drillMarginY,
                 drillWidth, drillHeight);
 
-            // adding text to page
-            contentStream.beginText();
+            // Get the header text
+            String drillTitle, measureText, moveLabel;
 
-            // setting font
-            PDFont pdfFont = PDType1Font.HELVETICA;
-            contentStream.setFont(pdfFont, 10);
+            drillTitle = drillInfo.getSongName();
 
-            int bufferTop = 50; // text offset from top of page
-            int bufferBottom = 50; // page number text offset from bottom of
-                                    // page
-
-            // print Measures
-            contentStream.newLineAtOffset((pageWidth / 2) - 47,
-                    pageHeight - bufferTop);
             // we have a map of measure number to count per measure
             // currently assumes 4 counts per measure
             // TODO: Make measures adjust with changes in count per measure
             begMeasure = endMeasure;
             endMeasure = begMeasure + move.getCounts() / 4;
             if (begMeasure != endMeasure) {
-                contentStream.showText("Measures:  " + (begMeasure + 1)
-                        + " - " + endMeasure);
+                measureText = "Measures:  " + (begMeasure + 1) + " - "
+                        + endMeasure;
             } else {
-                contentStream.showText("Measures:  " + begMeasure + " - "
-                        + endMeasure);
+                measureText = "Measures:  " + begMeasure + " - " + endMeasure;
             }
+
+            moveLabel = "Move " + moveNumber;
+
+            // setting font
+            PDFont pdfFont = PDType1Font.HELVETICA;
+            int fontSize = 10;
+            contentStream.setFont(pdfFont, fontSize);
+
+            // Print drill title
+            contentStream.beginText();
+            contentStream.newLineAtOffset(fieldMarginX, pageHeight - drillMarginY);
+            contentStream.showText(drillTitle);
             contentStream.endText();
 
-            // print Drill Name
+            // Print measures
+            float measureTextWidth = pdfFont.getStringWidth(measureText) / 1000.0f * fontSize;
             contentStream.beginText();
-            contentStream.newLineAtOffset(imageX + 55, pageHeight - bufferTop);
-            contentStream.showText(drillInfo.getSongName());
+            contentStream.newLineAtOffset((pageWidth - measureTextWidth)/2,
+                    pageHeight - drillMarginY);
+            contentStream.showText(measureText);
             contentStream.endText();
 
-            // Print Move
+            // Print move label
+            float moveLabelWidth = pdfFont.getStringWidth(moveLabel) / 1000.0f * fontSize;
             contentStream.beginText();
-            contentStream.newLineAtOffset(pageWidth / 2 + 150,
-                    pageHeight - bufferTop);
-            contentStream.showText("Move " + moveNumber);
+            contentStream.newLineAtOffset(pageWidth - fieldMarginX - moveLabelWidth,
+                    pageHeight - drillMarginY);
+            contentStream.showText(moveLabel);
             contentStream.endText();
 
             // print instructions for ranks
@@ -395,9 +400,7 @@ public class PDFGenerator {
      */
     public BufferedImage createImage(JPanel panel) {
 
-        int w = panel.getWidth() - 54;
-        int h = panel.getHeight();
-        BufferedImage bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        BufferedImage bi = new BufferedImage(panel.getWidth(), panel.getHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D g = bi.createGraphics();
         panel.paint(g);
         return bi;
