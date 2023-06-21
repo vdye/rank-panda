@@ -41,7 +41,7 @@ public final class Field {
         100.0f * 3, // 100 yd
         160.0f, // 160 ft
         10.0f * 3, // 10 yd
-        5.0f * 3, // 5 yd
+        12.0f, // 12 ft
         10.0f * 3 / 4.0f, // 4 increments between 10 yd lines
         4, // 10 yd increment
         2, // 5 yd increment
@@ -52,7 +52,7 @@ public final class Field {
         100.0f * 3, // 100 yd
         160.0f, // 160 ft
         10.0f * 3, // 10 yd
-        5.0f * 3, // 5 yd
+        12.0f, // 12 ft
         10.0f * 3 / 4.0f, // 4 increments between 10 yd lines
         4, // 10 yd increment
         2, // 5 yd increment
@@ -63,7 +63,7 @@ public final class Field {
         110.0f * 3, // 110 yd
         65.0f * 3, // 65 yd
         10.0f * 3, // 10 yd
-        5.0f * 3, // 5 yd
+        12.0f, // 12 ft
         10.0f * 3 / 4.0f, // 4 increments between 10 yd lines
         4, // 10 yd increment
         2, // 5 yd increment
