@@ -53,29 +53,6 @@ public class Point extends Point2D.Float {
         return "Point [x=" + x + ", y=" + y + "]";
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        //general comparisons
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-
-        //field comparisons
-        Point other = (Point) obj;
-        if (Math.abs(x - other.x) > 0.1) {
-            return false;
-        }
-        if (Math.abs(y - other.y) > 0.1) {
-            return false;
-        }
-        return true;
-    }
     public double distance(double x, double y){
         return Math.sqrt((this.x-x)*(this.x-x)+(this.y-y)*(this.y-y));
     }
