@@ -84,10 +84,9 @@ public abstract class FieldView extends JPanel {
     }
 
     public void drawField(Graphics2D g) {
-        Rectangle2D canvasRect = new Rectangle2D.Float(0, 0,
-            field.TotalLength, field.TotalHeight);
+        // Paint the canvas background
         g.setColor(Color.WHITE);
-        g.fill(canvasRect);
+        g.fill(g.getClipBounds());
 
         Rectangle2D fieldRect = new Rectangle2D.Float(field.EndzoneWidth, field.SidelineWidth,
             field.Length, field.Height);
