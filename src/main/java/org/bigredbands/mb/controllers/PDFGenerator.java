@@ -6,8 +6,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import javax.swing.JPanel;
 
@@ -23,9 +24,9 @@ import org.bigredbands.mb.models.CommandPair;
 import org.bigredbands.mb.models.DrillInfo;
 import org.bigredbands.mb.models.Field;
 import org.bigredbands.mb.models.Move;
+import org.bigredbands.mb.utils.WordWrap;
 import org.bigredbands.mb.views.PdfImage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-
 
 /**
  *
@@ -110,8 +111,6 @@ public class PDFGenerator {
             // as 0,0 reference; properly orients text and image
             contentStream.transform(new Matrix(0, 1, -1, 0, pageHeight, 0));
 
-            int imageX = 60; // x coordinate of image on document
-
             contentStream.drawImage(img,
                 drillMarginX, pageHeight - drillHeight - drillMarginY,
                 drillWidth, drillHeight);
@@ -137,7 +136,9 @@ public class PDFGenerator {
 
             // setting font
             PDFont pdfFont = PDType1Font.HELVETICA;
-            int fontSize = 10;
+            PDFont rankFont = PDType1Font.HELVETICA_BOLD;
+            float commentFontSize = 12.0f;
+            float fontSize = 10.0f;
             contentStream.setFont(pdfFont, fontSize);
 
             // Print drill title
@@ -168,203 +169,94 @@ public class PDFGenerator {
             // otherwise start text in next column or if no more space on the
             // right, next row
             if (moveNumber > 0) {
-                ArrayList<String> rankNames = new ArrayList<String>(); // all rank names
-
-                HashMap<ArrayList<CommandPair>, String> uniqueMoves = new HashMap<ArrayList<CommandPair>, String>();
-
-                for (Entry<String, ArrayList<CommandPair>> entry : move
-                        .getCommands().entrySet()) {
-
-                    boolean match = false; // match indicates whether there is
-                                            // already this unique set of
-                                            // commands in the hashmap
-                    String rankName = entry.getKey();
-                    rankNames.add(rankName);
-                    ArrayList<CommandPair> comPairs = entry.getValue();
-
-                    // for every key in uniquemoves
-                    for (Entry<ArrayList<CommandPair>, String> umEntry : uniqueMoves
-                            .entrySet()) {
-
-                        // if this comPairs = something already in the keyset
-                        if (comPairs.equals(umEntry.getKey())) {
-                            // add ", rankname" to value
-                            uniqueMoves.put(umEntry.getKey(),
-                                    umEntry.getValue() + ", " + rankName);
-                            match = true;
-                            break;
-                        }
-                    }
-                    // if this comPairs not already in the keyset
-                    if (match == false) {
-                        uniqueMoves.put(comPairs, rankName);
-                    }
-
-                }
-
                 // print move's comments
+                float yOffset = drillMarginY + drillHeight + fontSize;
                 if (move.getComments().length() > 0) {
-                    contentStream.setFont(pdfFont, 12);
+                    yOffset += (commentFontSize - fontSize);
+
+                    contentStream.setFont(pdfFont, commentFontSize);
                     contentStream.beginText();
-                    contentStream.newLineAtOffset(imageX + 55, pageHeight - 385);
+                    contentStream.newLineAtOffset(fieldMarginX, pageHeight - yOffset);
                     contentStream.showText("Comments:  " + move.getComments());
                     contentStream.endText();
-                    contentStream.setFont(pdfFont, 10);
+
+                    // Reset to original font size
+                    contentStream.setFont(pdfFont, fontSize);
+
+                    // Offset for the comment space
+                    yOffset += 2*fontSize;
                 }
+
+                // Divide per-rank commands into columns
+                int numColumns = 3;
+                float columnWidth = (pageWidth - 2 * fieldMarginX) / (float) numColumns;
+                float commandMaxWidth = columnWidth * 0.95f;
 
                 contentStream.beginText();
-                contentStream.newLineAtOffset(imageX + 55, pageHeight - 410);
+                contentStream.newLineAtOffset(fieldMarginX, pageHeight - yOffset);
 
-                int columnCount = 0; // tracks number of columns used
+                // Get the ranks grouped by unique move
+                Map<ArrayList<CommandPair>, String> rankGroups = move.getCommands().entrySet().stream()
+                    .collect(
+                        Collectors.groupingBy(
+                            Map.Entry::getValue,
+                            Collectors.mapping(Map.Entry::getKey, Collectors.joining(", "))
+                        )
+                    );
 
-                // find longest command - determines number of lines before next
-                // instruction
-                int maxLength = 0; // keeps track of largest unique instruction
-                                    // (in terms of size of string)
+                int rankGroupCounter = 0;
+                int maxLines = 1;
+                float lineSpacing = 1.5f * fontSize;
+                for (Entry<ArrayList<CommandPair>, String> rankGroup : rankGroups.entrySet()) {
+                    String rankStr = rankGroup.getValue() + ":";
+                    String commandStr = rankGroup.getKey().stream()
+                        .map(Object::toString)
+                        .collect(Collectors.joining(", "));
 
-                for (Entry<ArrayList<CommandPair>, String> umEntry : uniqueMoves
-                        .entrySet()) {
-                    String instructions = umEntry.getValue()
-                            + ": "
-                            + umEntry
-                                    .getKey()
-                                    .toString()
-                                    .substring(
-                                            1,
-                                            umEntry.getKey().toString()
-                                                    .length() - 1);
-                    if (instructions.length() > maxLength) {
-                        maxLength = instructions.length();
+                    // Print the list of ranks and calculate where the list of
+                    // commands should start.
+                    contentStream.setFont(rankFont, fontSize);
+                    String[] wrappedRanks = WordWrap.wrap(rankStr, commandMaxWidth, 0.0f, ",", rankFont, fontSize);
+                    assert(wrappedRanks.length > 0);
+
+                    for (String line : wrappedRanks) {
+                        contentStream.showText(line);
+                        contentStream.newLineAtOffset(0, -lineSpacing);
                     }
-                }
 
-                int addLines = maxLength / 35; // additional lines needed because of longer instructions
+                    // Since we need to print the next text on the same line,
+                    // back up a line and indent by the appropriate offset.
+                    float commandStrOffset = rankFont.getStringWidth(wrappedRanks[wrappedRanks.length - 1] + " ") / 1000.0f * fontSize;
+                    contentStream.newLineAtOffset(commandStrOffset, lineSpacing);
 
+                    // Print the list of commands after the list of ranks
+                    contentStream.setFont(pdfFont, fontSize);
+                    String[] wrappedCommands = WordWrap.wrap(commandStr, commandMaxWidth, commandStrOffset, ",", pdfFont, fontSize);
+                    assert(wrappedCommands.length > 0);
 
-                for (Entry<ArrayList<CommandPair>, String> umEntry2 : uniqueMoves
-                        .entrySet()) {
-                    String instructions2 = umEntry2.getValue()
-                            + ": "
-                            + umEntry2
-                                    .getKey()
-                                    .toString()
-                                    .substring(
-                                            1,
-                                            umEntry2.getKey().toString()
-                                                    .length() - 1);
+                    for (String line : wrappedCommands) {
+                        contentStream.showText(line);
+                        contentStream.newLineAtOffset(-commandStrOffset, -lineSpacing);
 
-                    // if all instructions less than 30 characters
-                    if (addLines == 0) {
+                        // Zero out the offset so we only apply it to the first
+                        // line.
+                        commandStrOffset = 0;
+                    }
 
-                        if (columnCount % 3 == 0) {
-                            contentStream.showText(instructions2);
-                            contentStream.newLineAtOffset(190, 0);
-                        } else if (columnCount % 3 == 1) {
-                            contentStream.showText(instructions2);
-                            contentStream.newLineAtOffset(190, 0);
-                        } else if (columnCount % 3 == 2) {
-                            contentStream.showText(instructions2);
-                            contentStream.newLineAtOffset(-380, -30);
-                        }
-                        columnCount++;
+                    int totalLines = wrappedRanks.length + wrappedCommands.length - 1;
+                    contentStream.newLineAtOffset(0, totalLines * lineSpacing);
+                    maxLines = Math.max(maxLines, totalLines);
+
+                    // Move to the next writeout position
+                    rankGroupCounter++;
+                    if (rankGroupCounter % numColumns == 0) {
+                        contentStream.newLineAtOffset(-((numColumns - 1) * columnWidth), -(maxLines + 1) * lineSpacing);
                     } else {
-                        // if at least one instruction is greater than 30 characters
-                        // create an ArrayList of substrings
-                        ArrayList<String> divInstructions = new ArrayList<String>(); // contains instructions for each line
-                        int i = 0;
-                        String subString = "";
-
-                        // if instruction length is less than 30, just add the
-                        // entire instruction
-                        if (instructions2.length() < 30) {
-                            subString = instructions2.substring(i,
-                                    instructions2.length());
-                            divInstructions.add(subString);
-                        }
-
-                        // else you need to print instruction on multiple lines
-                        else {
-                            int instrLength = 1; // subinstruction length
-                            while (i < instructions2.length()) {
-
-                                instrLength = Math.min(35, instructions2
-                                        .substring(i, instructions2.length())
-                                        .length());// the min of 35 or amount of
-                                                    // characters left in
-                                                    // instruction
-                                subString = instructions2.substring(i, i
-                                        + instrLength); // !!!!!!!!!need to fix
-                                                        // to go to comma w/e
-                                divInstructions.add(subString);
-                                i = i + 35;
-                            }
-                        }
-
-                        int divInstSize = divInstructions.size(); // number of
-                                                                    // subinstructions
-                        int numLeft = divInstructions.size(); // tracks number of subinstructions left to print
-
-                        if (divInstSize == 1) {
-                            if (columnCount % 3 == 0) {
-                                contentStream.showText(instructions2);
-                                contentStream.newLineAtOffset(190, 0);
-                            } else if (columnCount % 3 == 1) {
-                                contentStream.showText(instructions2);
-                                contentStream.newLineAtOffset(190, 0);
-                            } else if (columnCount % 3 == 2) {
-                                contentStream.showText(instructions2);
-                                contentStream.newLineAtOffset(-380,
-                                        -15 + addLines * (-15));
-                            }
-                            columnCount++;
-                        }
-
-                        else if (divInstSize > 1) {
-                            if (columnCount % 3 == 0) {
-                                for (String s : divInstructions) {
-                                    if (numLeft > 0) {
-                                        contentStream.showText(s);
-                                        contentStream.newLineAtOffset(
-                                                0, -15);
-                                        numLeft--;
-                                    }
-                                }
-                                contentStream.newLineAtOffset(190,
-                                        (divInstSize) * 15);
-                            }
-
-                            else if (columnCount % 3 == 1) {
-                                for (String s : divInstructions) {
-                                    if (numLeft > 0) {
-                                        contentStream.showText(s);
-                                        contentStream.newLineAtOffset(
-                                                0, -15);
-                                        numLeft--;
-                                    }
-                                }
-                                contentStream.newLineAtOffset(190,
-                                        (divInstSize) * 15);
-                            }
-
-                            else if (columnCount % 3 == 2) {
-                                for (String s : divInstructions) {
-                                    if (numLeft > 0) {
-                                        contentStream.showText(s);
-                                        contentStream.newLineAtOffset(
-                                                0, -15);
-                                        numLeft--;
-                                    }
-                                }
-                                contentStream.newLineAtOffset(-380,
-                                        (addLines - 1) * (-15));
-                            }
-                            columnCount++;
-                        }
+                        contentStream.newLineAtOffset(columnWidth, 0);
                     }
-
                 }
-                contentStream.endText();
 
+                contentStream.endText();
             }
 
             // print page number
