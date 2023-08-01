@@ -42,7 +42,8 @@ public class PDFGenerator {
     public PDFGenerator() {
     }
 
-    private PDPageContentStream addNewPage(PDDocument document, PDRectangle mediaBox) throws IOException {
+    private PDPageContentStream addNewPage(PDDocument document, PDRectangle mediaBox,
+            int pageNumber, float margin, PDFont font, float fontSize) throws IOException {
         // Create a new blank page and add it to the document
         PDPage blankPage = new PDPage(mediaBox);
 
@@ -61,6 +62,16 @@ public class PDFGenerator {
         // translation of media box width to use the lower left corner as 0,0
         // reference; properly orients text and image
         contentStream.transform(new Matrix(0, 1, -1, 0, mediaBox.getWidth(), 0));
+
+        // Print the page number
+        contentStream.setFont(font, fontSize);
+        String pageNumString = Integer.toString(pageNumber);
+        contentStream.beginText();
+        contentStream.newLineAtOffset((mediaBox.getHeight() - font.getStringWidth(pageNumString) / 1000.0f) / 2,
+                margin);
+        contentStream.showText(pageNumString);
+        contentStream.endText();
+
         return contentStream;
     }
 
@@ -126,7 +137,8 @@ public class PDFGenerator {
         for (Move move : drillInfo.getMoves()) {
 
             // Create the first page of the move
-            PDPageContentStream contentStream = addNewPage(document, pageSize);
+            PDPageContentStream contentStream = addNewPage(document, pageSize,
+                pageNumber++, pageMarginY, pdfFont, fontSize);
             contentStream.setFont(pdfFont, fontSize);
 
             // Get the header text
@@ -250,7 +262,8 @@ public class PDFGenerator {
 
                         // Add a new page
                         yPosition = pageHeight - pageMarginY;
-                        contentStream = addNewPage(document, pageSize);
+                        contentStream = addNewPage(document, pageSize,
+                            pageNumber++, pageMarginY, pdfFont, fontSize);
                         contentStream.beginText();
                         contentStream.setLeading(lineSpacing * fontSize);
                         contentStream.newLineAtOffset(textMarginX, yPosition - fontSize);
@@ -297,16 +310,6 @@ public class PDFGenerator {
 
             }
 
-            // print page number
-            /*if (moveNumber >= 0) {
-                contentStream.beginText();
-                contentStream.newLineAtOffset((pageWidth / 2) - 15,
-                        bufferBottom - 20);
-                contentStream.showText("Page " + pageNumber);
-                contentStream.endText();
-            }*/
-
-            pageNumber++; // increment page number
             moveNumber++; // increment move number
 
             // close out content stream
